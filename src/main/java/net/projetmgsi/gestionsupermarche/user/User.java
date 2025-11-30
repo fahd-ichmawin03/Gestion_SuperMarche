@@ -3,8 +3,8 @@ package net.projetmgsi.gestionsupermarche.user;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-@Entity
 
+@Entity
 @Getter
 @Setter
 @Table(name="users")
@@ -20,7 +20,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // ⚠️ Constructeur par défaut requis par JPA
+    // Constructeur par défaut requis par JPA
     public User() {}
 
     // Constructeur pratique
