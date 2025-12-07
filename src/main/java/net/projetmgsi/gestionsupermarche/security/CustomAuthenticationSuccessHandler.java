@@ -23,7 +23,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
             redirectUrl = "/admin/dashboard";
         } else if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_CAISSIER"))) {
-            redirectUrl = "/caissier/ventes";
+            redirectUrl = "/caissier/dashboard";
         }
 
         response.sendRedirect(redirectUrl);
