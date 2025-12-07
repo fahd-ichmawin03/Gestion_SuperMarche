@@ -33,6 +33,9 @@ public class Produit {
     @Column(nullable = false)
     private Integer stock;
 
+    @Column(nullable = false)
+    private int stockMinimal;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;

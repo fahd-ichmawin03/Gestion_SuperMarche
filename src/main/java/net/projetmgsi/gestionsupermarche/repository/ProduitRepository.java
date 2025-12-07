@@ -3,6 +3,7 @@ package net.projetmgsi.gestionsupermarche.repository;
 import net.projetmgsi.gestionsupermarche.entity.Categorie;
 import net.projetmgsi.gestionsupermarche.entity.Produit;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -20,4 +21,16 @@ public interface ProduitRepository extends JpaRepository<Produit, Long> {
     List<Produit> findByCategorie(Categorie categorie);
 
     List<Produit> findByStockLessThan(Integer seuil);  // Produits en rupture
+
+    @Query("SELECT p FROM Produit p WHERE p.stock < p.stockMinimal")
+    List<Produit> getStockFaible();
+
+    @Query("SELECT p FROM Produit p WHERE p.stock = 0")
+    List<Produit> getProduitsRupture();
+
+    @Query("SELECT p FROM Produit p WHERE p.stock BETWEEN 1 AND p.stockMinimal")
+    List<Produit> getProduitsStockFaible();
+
+
+
 }
