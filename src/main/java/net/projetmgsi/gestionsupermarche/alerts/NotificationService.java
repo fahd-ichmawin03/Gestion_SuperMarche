@@ -1,44 +1,35 @@
 package net.projetmgsi.gestionsupermarche.alerts;
-
-
+import lombok.RequiredArgsConstructor;
 import net.projetmgsi.gestionsupermarche.entity.Notification;
+import net.projetmgsi.gestionsupermarche.entity.NotificationType;
 import net.projetmgsi.gestionsupermarche.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
-
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository repository;
 
-    public NotificationService(NotificationRepository repository) {
-        this.repository = repository;
-    }
-
-    public void creerNotification(String message) {
-        // Vérifie si une notification non lue avec le même message existe déjà
-        boolean existe = repository.existsByMessageAndLueFalse(message);
-        if (!existe) {
-            Notification n = new Notification();
-            n.setMessage(message);
-            repository.save(n);
-        }
+    public void creerNotification(String message, NotificationType type) {
+        Notification n = new Notification();
+        n.setMessage(message);
+        n.setType(type);
+        repository.save(n);
     }
 
     public List<Notification> getAlertesNonLues() {
         return repository.findByLueFalseOrderByDateCreationDesc();
     }
 
-    public void marquerCommeLue(Long notificationId) {
-        Notification n = repository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification non trouvée"));
+    public long countNonLues() {
+        return repository.countByLueFalse();
+    }
+
+    public void marquerCommeLue(Long id) {
+        Notification n = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification introuvable"));
         n.setLue(true);
         repository.save(n);
     }
-
-    public void supprimerNotification(Long notificationId) {
-        repository.deleteById(notificationId);
-    }
-
-
 }

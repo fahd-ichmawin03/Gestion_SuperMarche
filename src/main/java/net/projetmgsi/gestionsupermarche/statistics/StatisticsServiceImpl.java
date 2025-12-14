@@ -27,17 +27,50 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public DashboardStatsDTO getDashboardStats(LocalDateTime date) {
-        DashboardStatsDTO dto = new DashboardStatsDTO();
 
         LocalDate d = (date != null) ? date.toLocalDate() : LocalDate.now();
 
-        dto.setCaJour(venteRepository.getChiffreAffaireParJour(d));
-        dto.setCaMois(venteRepository.getChiffreAffaireParMois(d.getMonthValue(), d.getYear()));
-        dto.setCaAnnee(venteRepository.getChiffreAffaireParAnnee(d.getYear()));
+        // 🔹 Chiffre d'affaires
+        Double caJour = venteRepository.getChiffreAffaireParJour(d);
+        Double caMois = venteRepository.getChiffreAffaireParMois(d.getMonthValue(), d.getYear());
+        Double caAnnee = venteRepository.getChiffreAffaireParAnnee(d.getYear());
 
-        dto.setStockFaible((double) produitRepository.getStockFaible().size());
-        return dto;
+        if (caJour == null) caJour = 0.0;
+        if (caMois == null) caMois = 0.0;
+        if (caAnnee == null) caAnnee = 0.0;
+
+        // 🔹 Nombre de ventes
+        Integer nbVentes = Math.toIntExact(venteRepository.count());
+
+        // 🔹 Clients servis (via lignes de vente)
+        Integer nbClients = Math.toIntExact(ligneVenteRepository.countClientsServis());
+
+        // 🔹 Panier moyen
+        Double totalCA = venteRepository.getTotalCA();
+        if (totalCA == null) totalCA = 0.0;
+
+        Double panierMoyen = (nbVentes == 0) ? 0.0 : totalCA / nbVentes;
+
+        // 🔹 Produits en rupture
+        Integer nbRupture = Math.toIntExact(
+                produitRepository.countByStockLessThanEqual(0)
+        );
+
+        // 🔹 Stock faible (optionnel, déjà OK chez toi)
+        Double stockFaible = (double) produitRepository.getStockFaible().size();
+
+        return new DashboardStatsDTO(
+                caJour,
+                caMois,
+                caAnnee,
+                stockFaible,
+                nbVentes,
+                nbClients,
+                panierMoyen,
+                nbRupture
+        );
     }
+
 
     @Override
     public List<TopProduitDTO> getTop5Produits(LocalDateTime date) {
@@ -56,23 +89,15 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public List<Map<String, Object>> getVentesGraphData(LocalDateTime date) {
-        List<Object[]> rawData;
-        if (date != null) {
-            rawData = stockRepository.getVentesParJour(date.toLocalDate());
-        } else {
-            rawData = stockRepository.getVentesParJour(null);
-        }
-
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Object[] obj : rawData) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("date", obj[0].toString());
-            map.put("quantite", ((Number) obj[1]).intValue());
-            result.add(map);
-        }
-        return result;
+    public List<Map<String, Object>> getVentesGraphData(
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        return venteRepository.getVentesEntre(from, to);
     }
+
+
+
 
     @Override
     public List<Map<String, Object>> getPaiementStats(LocalDateTime date) {

@@ -12,4 +12,8 @@ public interface LigneVenteRepository extends JpaRepository<LigneVente, Long> {
     @Query("SELECT lv.produit.nom, SUM(lv.quantite) AS qte " +
             "FROM LigneVente lv GROUP BY lv.produit.id ORDER BY qte DESC")
     List<Object[]> getTopProduits();
+
+    @Query("SELECT COUNT(DISTINCT l.vente.id) FROM LigneVente l")
+    long countClientsServis();
+
 }

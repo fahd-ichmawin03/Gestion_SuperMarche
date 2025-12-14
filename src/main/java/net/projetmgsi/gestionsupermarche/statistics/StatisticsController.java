@@ -3,6 +3,9 @@ package net.projetmgsi.gestionsupermarche.statistics;
 import lombok.RequiredArgsConstructor;
 import net.projetmgsi.gestionsupermarche.alerts.NotificationService;
 import net.projetmgsi.gestionsupermarche.entity.Produit;
+import net.projetmgsi.gestionsupermarche.repository.LigneVenteRepository;
+import net.projetmgsi.gestionsupermarche.repository.StockRepository;
+import net.projetmgsi.gestionsupermarche.repository.VenteRepository;
 import net.projetmgsi.gestionsupermarche.statistics.dto.DashboardStatsDTO;
 import net.projetmgsi.gestionsupermarche.statistics.dto.TopProduitDTO;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -38,11 +41,20 @@ public class StatisticsController {
     }
 
     @GetMapping("/ventes-graph")
-    public List<Map<String, Object>> getVentesGraph(@RequestParam(required = false) String date) {
-        LocalDateTime filterDate = null;
-        if (date != null) filterDate = LocalDate.parse(date).atStartOfDay();
-        return statisticsService.getVentesGraphData(filterDate);
+    public List<Map<String, Object>> getVentesGraph(
+            @RequestParam(required = false) String date,
+            @RequestParam(defaultValue = "7") int jours
+    ) {
+        LocalDate ref = (date != null)
+                ? LocalDate.parse(date)
+                : LocalDate.now();
+
+        LocalDateTime from = ref.minusDays(jours).atStartOfDay();
+        LocalDateTime to = ref.atTime(23, 59, 59);
+
+        return statisticsService.getVentesGraphData(from, to);
     }
+
 
     // ✅ Graphique par moyen de paiement
     @GetMapping("/paiements")
@@ -53,12 +65,6 @@ public class StatisticsController {
         return statisticsService.getPaiementStats(
                 date != null ? date.atStartOfDay() : null
         );
-    }
-
-    @PostMapping("/notifications/jaiRecu/{id}")
-    public String jaiRecu(@PathVariable Long id) {
-        notificationService.supprimerNotification(id);
-        return "redirect:/alerts";
     }
 
 

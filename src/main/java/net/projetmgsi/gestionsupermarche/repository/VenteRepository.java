@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public interface VenteRepository extends JpaRepository<Vente, Long> {
@@ -38,4 +39,22 @@ public interface VenteRepository extends JpaRepository<Vente, Long> {
         GROUP BY v.moyenPaiement
     """)
     List<Object[]> getStatsParPaiement(@Param("date") LocalDate date);
+
+    @Query("SELECT SUM(v.total) FROM Vente v")
+    Double getTotalCA();
+
+    @Query("""
+    SELECT DATE(v.dateVente) AS date,
+           COUNT(v.id) AS quantite
+    FROM Vente v
+    WHERE v.dateVente BETWEEN :from AND :to
+    GROUP BY DATE(v.dateVente)
+    ORDER BY DATE(v.dateVente)
+""")
+    List<Map<String, Object>> getVentesEntre(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+
 }

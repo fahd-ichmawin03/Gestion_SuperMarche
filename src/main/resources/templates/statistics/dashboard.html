@@ -94,8 +94,10 @@
             <tbody></tbody>
         </table>
     </div>
-
-    <a href="/alerts" class="btn btn-danger mt-4">🚨 Voir les alertes de stock</a>
+    <a href="/alerts" class="btn btn-danger mt-4">
+        🚨 Voir les alertes de stock
+        <span th:if="${nbNotifications > 0}" class="badge bg-light text-danger" th:text="${nbNotifications}"></span>
+    </a>
 
 </div>
 
@@ -106,33 +108,38 @@
     </div>
 </div>
 
-
 <div class="row g-4 mb-4 text-center">
-    <div class="col-md-3">
-        <div class="card stat-card p-3">
-            <p>🧾 Nombre de ventes</p>
-            <div id="nbVentes" class="stat-number text-dark">0</div>
+
+    <div class="col-md-3 col-6">
+        <div class="card shadow-sm p-3">
+            <div id="nbVentes" th:text="${nbVentes}" class="stat-number fs-2 fw-bold text-dark">0</div>
+            <div class="text-muted">Ventes</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card p-3">
-            <p>👥 Clients servis</p>
-            <div id="nbClients" class="stat-number text-dark">0</div>
+
+    <div class="col-md-3 col-6">
+        <div class="card shadow-sm p-3">
+            <div id="nbClients" th:text="${nbClients}" class="stat-number fs-2 fw-bold text-dark">0</div>
+            <div class="text-muted">Clients servis</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card p-3">
-            <p>🛒 Panier moyen</p>
-            <div id="panierMoyen" class="stat-number text-dark">0</div>
+
+    <div class="col-md-3 col-6">
+        <div class="card shadow-sm p-3">
+            <div id="panierMoyen" th:text="${panierMoyen}" class="stat-number fs-2 fw-bold text-dark">0</div>
+            <div class="text-muted">Panier moyen (MAD)</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card p-3">
-            <p>⚠️ Produits en rupture</p>
-            <div id="nbRupture" class="stat-number text-danger">0</div>
+
+    <div class="col-md-3 col-6">
+        <div class="card shadow-sm p-3">
+            <div id="nbRupture" th:text="${nbRupture}" class="stat-number fs-2 fw-bold text-danger">0</div>
+            <div class="text-muted">Ruptures</div>
         </div>
     </div>
+
 </div>
+
 
 
 <!-- Scripts -->
@@ -140,16 +147,18 @@
     let ventesChart, paiementsChart;
 
     function fetchStats(date = null) {
-        // 1️⃣ Chiffre d'affaires et compteurs
+        // 1️⃣ Chiffres et compteurs
+        const jours = 7;
         fetch('/api/stats/dashboard' + (date ? '?date=' + date : ''))
             .then(res => res.json())
             .then(data => {
-                animateValue("caJour", data.caJour);
-                animateValue("caMois", data.caMois);
-                animateValue("caAnnee", data.caAnnee);
+                animateValue("caJour", data.caJour, "DH");
+                animateValue("caMois", data.caMois, "DH");
+                animateValue("caAnnee", data.caAnnee, "DH");
+
                 animateValue("nbVentes", data.nbVentes || 0);
                 animateValue("nbClients", data.nbClients || 0);
-                animateValue("panierMoyen", data.panierMoyen || 0);
+                animateValue("panierMoyen", data.panierMoyen || 0, "DH");
                 animateValue("nbRupture", data.nbRupture || 0);
             });
 
@@ -164,11 +173,19 @@
                 });
             });
 
-        // 3️⃣ Graphiques ventes
-        fetch('/api/stats/ventes-graph' + (date ? '?date=' + date : ''))
+        // 3️⃣ Graphique ventes
+        fetch('/api/stats/ventes-graph'
+            + (date ? `?date=${date}&jours=${jours}` : `?jours=${jours}`))
             .then(res => res.json())
             .then(data => {
-                const labels = data.map(d => d.date);
+
+                const labels = data.map(d =>
+                    new Date(d.date).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'short'
+                    })
+                );
+
                 const values = data.map(d => d.quantite);
 
                 const ctx = document.getElementById('ventesChart').getContext('2d');
@@ -176,11 +193,35 @@
 
                 ventesChart = new Chart(ctx, {
                     type: 'line',
-                    data: { labels, datasets: [{ label:'Ventes par jour', data: values, borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,0.2)', tension:0.4, fill:true }] },
-                    options: { responsive:true, scales:{y:{beginAtZero:true}} }
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Ventes par jour',
+                            data: values,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13,110,253,0.15)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {beginAtZero: true}
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.parsed.y} ventes`
+                                }
+                            },
+                            legend: {display: false}
+                        }
+                    }
                 });
             });
-
         // 4️⃣ Graphique paiements
         fetch('/api/stats/paiements' + (date ? '?date=' + date : ''))
             .then(res => res.json())
@@ -192,27 +233,53 @@
                 if (paiementsChart) paiementsChart.destroy();
 
                 paiementsChart = new Chart(ctx, {
-                    type:'doughnut',
-                    data:{ labels, datasets:[{ data: values, backgroundColor:['#0d6efd','#198754','#ffc107','#dc3545'] }] },
-                    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+                    type: 'doughnut',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {legend: {position: 'bottom'}}
+                    }
                 });
             });
     }
 
     // Animation compteurs
-    function animateValue(id, end) {
-        let start = 0, obj = document.getElementById(id), current = start;
-        let step = Math.max(1, Math.floor(end/100));
-        let timer = setInterval(function(){
+    function animateValue(id, end, suffix = "") {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+
+        end = Number(end);
+        if (isNaN(end)) {
+            obj.innerHTML = end;
+            return;
+        }
+
+        let start = 0;
+        let current = start;
+        let step = Math.max(1, Math.floor(end / 50));
+
+        let timer = setInterval(() => {
             current += step;
-            if(current>=end) current=end;
-            obj.innerHTML = current.toLocaleString() + " DH";
-            if(current===end) clearInterval(timer);
-        },15);
+            if (current >= end) current = end;
+
+            obj.innerHTML = current.toLocaleString() + (suffix ? " " + suffix : "");
+
+            if (current === end) clearInterval(timer);
+        }, 20);
     }
 
     // Date picker
-    flatpickr("#dateFilter",{ dateFormat:"Y-m-d", onChange:(dates, dateStr)=> fetchStats(dateStr) });
+    flatpickr("#dateFilter", {
+        dateFormat: "Y-m-d",
+        onChange: (dates, dateStr) => fetchStats(dateStr)
+    });
 
     // Dark mode toggle
     document.getElementById('toggleDark').addEventListener('click', () => {
@@ -222,7 +289,7 @@
 
     // Initial fetch
     fetchStats();
-
 </script>
+
 </body>
 </html>

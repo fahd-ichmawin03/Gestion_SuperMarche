@@ -15,6 +15,8 @@ public class Notification {
 
     private String message;
 
+    @Enumerated(EnumType.STRING)
+    private NotificationType type;
     private boolean lue = false;
 
     private LocalDateTime dateCreation = LocalDateTime.now();

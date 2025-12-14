@@ -31,6 +31,7 @@ public interface ProduitRepository extends JpaRepository<Produit, Long> {
     @Query("SELECT p FROM Produit p WHERE p.stock BETWEEN 1 AND p.stockMinimal")
     List<Produit> getProduitsStockFaible();
 
+    long countByStockLessThanEqual(int seuil);
 
 
 }
