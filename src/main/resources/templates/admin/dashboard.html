@@ -68,12 +68,39 @@
       </div>
     </div>
   </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card card-custom h-100 py-2 border-left-primary">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Statistiques et Alertes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Consultations des Statistiques</div>
+                            <p class="mt-2 text-muted">Suivre en temps réel l’état du stock et les performances du supermarché. </p>
+                            <a th:href="@{/statistics/dashboard}" class="btn btn-primary btn-sm mt-2">
+                                <i class="fas fa-chart-line"></i> Consulter
+                            </a>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i> <!-- Icône graphique -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 </div>
 
 <script th:src="@{/js/script.js}"></script>
 </body>
 </html>
 <a th:href="@{/admin/gestion-caissiers}">Gérer Caissiers</a> |
-<a th:href="@{/admin/gestion-stocks}">Approvisionner Stocks</a>
+<a th:href="@{/admin/gestion-stocks}">Approvisionner Stocks</a>|
+<a th:href="@{/statistics/dashboard}">Consulter Statistiques</a>
 </body>
 </html>

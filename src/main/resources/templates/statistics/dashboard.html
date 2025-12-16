@@ -188,6 +188,21 @@
             color: var(--muted);
         }
 
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 16px;
+            transition: background 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+
+
+
     </style>
 </head>
 
@@ -317,6 +332,14 @@
               th:text="${nbNotifications}">
         </span>
     </a>
+    <div class="mt-4">
+        <a th:href="@{/admin/dashboard}" class="btn-back action-btn mt-4">
+            <img src="/images/back.png" width="20">
+            Retour au dashboard
+        </a>
+
+    </div>
+
 
 </div>
 
