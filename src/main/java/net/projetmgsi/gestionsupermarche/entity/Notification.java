@@ -20,4 +20,7 @@ public class Notification {
     private boolean lue = false;
 
     private LocalDateTime dateCreation = LocalDateTime.now();
+   @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "produit_id")
+    private Produit produit;
 }

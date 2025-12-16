@@ -3,71 +3,200 @@
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
 <head>
     <title>Alertes & Notifications</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+
+        body.dark {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e5e7eb;
+            --border: #334155;
+        }
+
         body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
         }
-        .card-header {
-            font-weight: bold;
-            font-size: 1.2rem;
+
+        .card {
+            background-color: var(--card);
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
         }
-        .badge {
-            font-size: 0.9rem;
+
+        .list-group-item {
+            background: transparent;
+            color: var(--text);
+            border-left: 4px solid #6366f1;
         }
-        .notification-list li {
-            border-left: 5px solid #0d6efd;
-            transition: background 0.3s;
+
+        .notif-badge {
+            animation: pulse 1.5s infinite;
         }
-        .notification-list li:hover {
-            background-color: #e9ecef;
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
         }
-        .notification-count {
-            font-weight: bold;
-            margin-left: 0.5rem;
+
+        .icon-lg {
+            width: 36px;
+            height: 36px;
+            margin-right: 10px;
         }
+
+        .icon-md {
+            width: 26px;
+            height: 26px;
+            margin-right: 8px;
+        }
+
+        .icon-sm {
+            width: 18px;
+            height: 18px;
+            margin-right: 4px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0b2ecc, #aa8cc2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Titres principaux */
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        body.dark h1,
+        body.dark h4 {
+            color: #f8fafc;
+        }
+
+        body.dark .list-group-item span,
+        body.dark td {
+            color: #e5e7eb;
+        }
+
+        .theme-btn {
+            background: transparent;
+            border: none;
+            padding: 6px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        body.dark .theme-btn:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+
     </style>
 </head>
-<body class="container py-4">
 
-<!-- 🔔 Notifications -->
-<div class="mb-4">
-    <h3 class="mb-3">
-        🔔 Notifications
-        <span th:if="${nbNotifications > 0}" class="badge bg-danger notification-count"
-              th:text="${nbNotifications}"></span>
-    </h3>
+<body>
 
-    <div th:if="${#lists.isEmpty(notifications)}" class="alert alert-success">
-        Aucune notification ✅
-    </div>
+<!-- ================= HEADER ================= -->
+<div class="header">
+    <h1>
+        <img src="/images/dashboard.png" class="icon-lg">
+        Notifications et Alertes
+    </h1>
 
-    <ul class="list-group notification-list">
-        <li class="list-group-item d-flex justify-content-between align-items-center"
-            th:each="n : ${notifications}">
-            <span th:text="${n.message}"></span>
-            <div sec:authorize="hasRole('ADMIN')">
-                <form th:action="@{/notifications/jaiRecu/{id}(id=${n.id})}" method="post" style="display:inline">
-                    <button class="btn btn-sm btn-success">J'ai reçu</button>
-                </form>
-            </div>
-        </li>
-    </ul>
+    <button class="theme-btn" onclick="toggleTheme()">
+        <img id="themeIcon" src="/images/moon.png" class="icon-md">
+    </button>
+
 </div>
 
-<!-- 🚨 Alertes Stock -->
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-primary text-white">
-        🚨 Alertes Stock
+<!-- ================= CONTENT ================= -->
+<div class="container mt-4">
+
+    <!-- 🔔 NOTIFICATIONS -->
+    <div class="card p-4 mb-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>
+                <img src="/images/bell.png" class="icon-md">
+                Notifications
+            </h4>
+
+            <span th:if="${nbNotifications > 0}"
+                  id="notifBadge"
+                  class="badge bg-danger notif-badge"
+                  th:text="${nbNotifications}">
+            </span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(notifications)}" class="alert alert-success">
+            Aucune notification
+        </div>
+
+        <ul class="list-group">
+            <li th:each="n : ${notifications}"
+                class="list-group-item d-flex justify-content-between align-items-center"
+                id="notif-[[${n.id}]]">
+
+                <span th:text="${n.message}"></span>
+
+                <form th:action="@{/notifications/jaiRecu/{id}(id=${n.id})}"
+                      method="post"
+                      th:data-expiration="${n.type != null and n.type.name() == 'EXPIRATION' ? 'true' : 'false'}"
+                      onsubmit="return handleNotificationSubmit(this)">
+
+                <button th:if="${n.type != null and n.type.name() == 'EXPIRATION'}"
+                            class="btn btn-sm btn-danger">
+                        <img src="/images/delete.png" class="icon-sm">
+                        Retirer du stock
+                    </button>
+
+                    <button th:if="${n.type == null or n.type.name() != 'EXPIRATION'}"
+                            class="btn btn-sm btn-outline-success">
+                        <img src="/images/check.png" class="icon-sm">
+                        Reçu
+                    </button>
+                </form>
+            </li>
+        </ul>
     </div>
-    <div class="card-body p-0">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
+
+    <!-- 🚨 ALERTES STOCK -->
+    <div class="card p-4">
+        <h4>
+            <img src="/images/warning.png" class="icon-md">
+            Alertes Stock
+        </h4>
+
+        <table class="table table-hover mt-3">
+            <thead>
             <tr>
                 <th>Produit</th>
-                <th>Type d'alerte</th>
-                <th>Stock restant</th>
+                <th>Type</th>
+                <th>Stock</th>
             </tr>
             </thead>
             <tbody>
@@ -86,7 +215,84 @@
     </div>
 </div>
 
-<a href="/statistics/dashboard" class="btn btn-secondary mt-3">← Retour au Dashboard</a>
+<a href="/statistics/dashboard" class="btn btn-outline-secondary m-4">
+    <img src="/images/back.png" class="icon-sm">
+    Retour au dashboard
+</a>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function updateNotificationBadge() {
+        const badge = document.getElementById('notifBadge');
+        if (!badge) return;
+
+        let count = parseInt(badge.innerText) - 1;
+
+        if (count <= 0) {
+            badge.remove();
+        } else {
+            badge.innerText = count;
+        }
+    }
+
+    function handleNotificationSubmit(form) {
+        const isExpiration = form.dataset.expiration === 'true';
+
+        const action = form.action;
+        const formData = new FormData(form);
+
+        if (isExpiration) {
+            Swal.fire({
+                title: 'Produit expiré',
+                text: 'Ce produit sera retiré définitivement du stock.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, retirer',
+                cancelButtonText: 'Annuler'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    fetch(action, { method: 'POST', body: formData })
+                        .then(response => {
+                            if (response.ok) {
+                                form.closest('li').remove();
+                                updateNotificationBadge();
+                                Swal.fire('Succès', 'Produit supprimé et notification traitée', 'success');
+                            } else {
+                                Swal.fire('Erreur', 'Action échouée', 'error');
+                            }
+                        });
+                }
+            });
+            return false;
+        }
+
+        // notification normale
+        fetch(action, { method: 'POST', body: formData })
+            .then(response => {
+                if (response.ok) {
+                    form.closest('li').remove();
+                    updateNotificationBadge();
+                } else {
+                    Swal.fire('Erreur', 'Impossible de marquer comme reçue', 'error');
+                }
+            });
+
+        return false;
+    }
+
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        const icon = document.getElementById('themeIcon');
+        icon.src = document.body.classList.contains('dark')
+            ? '/images/sun.png'
+            : '/images/moon.png';
+    }
+</script>
 
 </body>
 </html>

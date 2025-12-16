@@ -5,16 +5,24 @@ import net.projetmgsi.gestionsupermarche.alerts.AlertService;
 import net.projetmgsi.gestionsupermarche.alerts.NotificationService;
 import net.projetmgsi.gestionsupermarche.alerts.dto.StockAlertDTO;
 import net.projetmgsi.gestionsupermarche.entity.Notification;
+import net.projetmgsi.gestionsupermarche.entity.NotificationType;
+import net.projetmgsi.gestionsupermarche.entity.Produit;
 import net.projetmgsi.gestionsupermarche.repository.LigneVenteRepository;
 import net.projetmgsi.gestionsupermarche.repository.ProduitRepository;
+import net.projetmgsi.gestionsupermarche.repository.StockRepository;
 import net.projetmgsi.gestionsupermarche.repository.VenteRepository;
+import net.projetmgsi.gestionsupermarche.service.PdfExportService;
+import net.projetmgsi.gestionsupermarche.service.ProduitService;
+import net.projetmgsi.gestionsupermarche.statistics.dto.DashboardStatsDTO;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,9 +37,8 @@ public class StatisticsWebController {
     private final StatisticsService statisticsService;
     private final AlertService alertService;
     private final NotificationService notificationService;
-    private final VenteRepository venteRepository;
-    private final LigneVenteRepository ligneventeRepository;
-    private final ProduitRepository produitRepository;
+    private final PdfExportService pdfExportService;
+    private final ProduitService produitService;
 
     @GetMapping("/statistics/dashboard")
     public String dashboard(Model model,
@@ -70,11 +77,44 @@ public class StatisticsWebController {
     }
 
     @PostMapping("/notifications/jaiRecu/{id}")
-    public String jaiRecu(@PathVariable Long id) {
+    @ResponseBody
+    public ResponseEntity<?> jaiRecu(@PathVariable Long id) {
+
+        Notification notification = notificationService.findById(id);
+
+        if (notification.getType() == NotificationType.EXPIRATION) {
+            Produit produit = notification.getProduit();
+
+            if (produit != null && produit.getActif()==true) {
+                produitService.supprimerProduit(produit.getId());
+            }
+        }
+
         notificationService.marquerCommeLue(id);
-        return "redirect:/alerts";
+
+        return ResponseEntity.ok().build();
     }
 
+
+
+
+    @GetMapping("/statistics/export-pdf")
+    public ResponseEntity<byte[]> exportDashboardPdf(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+
+        DashboardStatsDTO stats = statisticsService.getDashboardStats(
+                date != null ? date.atStartOfDay() : null
+        );
+
+        byte[] pdf = pdfExportService.exportDashboard(stats);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=dashboard.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
 
 
 

@@ -8,6 +8,7 @@ import net.projetmgsi.gestionsupermarche.repository.ProduitRepository;
 import net.projetmgsi.gestionsupermarche.alerts.dto.StockAlertDTO;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class AlertServiceImpl implements AlertService {
     private final ProduitRepository produitRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
+    LocalDate today = LocalDate.now();
+
 
     @Override
     public List<StockAlertDTO> getAlerts() {
@@ -35,7 +38,8 @@ public class AlertServiceImpl implements AlertService {
                 if (!notificationRepository.existsByMessageAndLueFalse(msg)) {
                     notificationService.creerNotification(
                             msg,
-                            NotificationType.RUPTURE
+                            NotificationType.RUPTURE,
+                            p
                     );
                 }
             }
@@ -54,10 +58,35 @@ public class AlertServiceImpl implements AlertService {
                 if (!notificationRepository.existsByMessageAndLueFalse(msg)) {
                     notificationService.creerNotification(
                             msg,
-                            NotificationType.STOCK_FAIBLE
+                            NotificationType.STOCK_FAIBLE,
+                            p
                     );
                 }
             }
+            LocalDate today = LocalDate.now();
+
+            // si produit expiré
+            if (p.getDateExpiration() != null &&
+                    p.getDateExpiration().isBefore(today)) {
+
+                String msg = "Produit expiré : " + p.getNom()
+                        + " (expiré le " + p.getDateExpiration() + ")";
+
+                alerts.add(new StockAlertDTO(
+                        p.getNom(),
+                        "Produit expiré",
+                        p.getStock()
+                ));
+
+                if (!notificationRepository.existsByMessageAndLueFalse(msg)) {
+                    notificationService.creerNotification(
+                            msg,
+                            NotificationType.EXPIRATION,
+                            p
+                    );
+                }
+            }
+
         }
 
         return alerts;

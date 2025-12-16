@@ -3,7 +3,6 @@ package net.projetmgsi.gestionsupermarche.statistics;
 import net.projetmgsi.gestionsupermarche.entity.Produit;
 import net.projetmgsi.gestionsupermarche.statistics.dto.DashboardStatsDTO;
 import net.projetmgsi.gestionsupermarche.statistics.dto.TopProduitDTO;
-import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +15,7 @@ public interface StatisticsService {
     List<TopProduitDTO> getTop5Produits(LocalDateTime date);
     List<Produit> getProduitsStockFaible();
 
-    List<Map<String, Object>> getVentesGraphData(LocalDateTime from,LocalDateTime to);
+    List<Map<String, Object>>getVentesGraphData(LocalDateTime from,LocalDateTime to);
 
     List<Map<String, Object>> getPaiementStats(LocalDateTime date);
 

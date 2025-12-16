@@ -1,5 +1,6 @@
 package net.projetmgsi.gestionsupermarche.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore; // <--- N'oubliez pas cet import
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,8 +19,10 @@ public class LigneVente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // --- MODIFICATION ICI ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vente_id", nullable = false)
+    @JsonIgnore  // <--- AJOUTEZ CECI POUR CASSER LA BOUCLE
     private Vente vente;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -35,10 +38,11 @@ public class LigneVente {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal sousTotal;
 
-    // Calcul automatique du sous-total
+
+
     @PrePersist
     @PreUpdate
-    protected void calculateSousTotal() {
+    public void calculateSousTotal() {
         if (prixUnitaire != null && quantite != null) {
             sousTotal = prixUnitaire.multiply(BigDecimal.valueOf(quantite));
         }

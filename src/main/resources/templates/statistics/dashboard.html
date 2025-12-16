@@ -2,180 +2,383 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Supermarché</title>
+    <title>Dashboard Statistiques</title>
 
-    <!-- Bootstrap + Chart.js + DatePicker -->
+    <!-- LIBRAIRIES -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
 
     <style>
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        .stat-card,
+        .section-card {
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+
+
         body {
-            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
         }
-        body.dark-mode {
-            background-color: #1e1e2f;
-            color: #f8f9fa;
+
+        .header {
+            background: linear-gradient(135deg, #0b2ecc 0%, #aa8cc2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
         }
+
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header img {
+            width: 32px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            padding: 6px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.25s ease, transform 0.2s ease;
+        }
+
+        .theme-toggle img {
+            width: 22px;
+            height: 22px;
+        }
+
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: rotate(15deg);
+        }
+
+        /* Mode dark */
+        body.dark .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
         .stat-card {
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card img {
+            width: 40px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .section-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .section-title img {
+            width: 28px;
         }
 
         .chart-container {
-            max-width: 500px;   /* largeur max du graphique */
-            max-height: 400px;  /* hauteur max */
-            margin: 0 auto;     /* centrer horizontalement */
+            max-width: 500px;
+            margin: auto;
         }
 
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-number { font-weight: bold; font-size: 2rem; }
-        .table-dark-mode { background-color: #2e2e3e; color: #f8f9fa; }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        :root {
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --text: #222;
+            --muted: #666;
+            --primary: #667eea;
+        }
+
+        body.dark {
+            --bg: #121212;
+            --card: #1e1e2f;
+            --text: #f1f1f1;
+            --muted: #aaa;
+            --primary: #8b9dfc;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .stat-card,
+        .section-card {
+            background: var(--card);
+            color: var(--text);
+        }
+
+        .stat-card h3,
+        .section-title {
+            color: var(--muted);
+        }
+
     </style>
 </head>
 
 <body>
-<div class="container py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">📊 Dashboard - Supermarché</h2>
-        <button id="toggleDark" class="btn btn-outline-secondary">🌙 Mode sombre</button>
+<!-- HEADER -->
+<div class="header">
+    <h1>
+        <img src="/images/dashboard.png" alt="Dashboard">
+        Dashboard Statistiques
+    </h1>
+
+    <div class="header-actions">
+        <a th:href="@{/statistics/export-pdf}" class="btn btn-light action-btn">
+            <img src="/images/chart.png" width="20">
+            Exporter PDF
+        </a>
+
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Changer le thème">
+            <img id="themeIcon" src="/images/moon.png" alt="Theme">
+        </button>
+
+
     </div>
+</div>
 
-    <!-- Filtre par date -->
+
+<div class="container">
+
+    <!-- FILTRE DATE -->
     <div class="mb-4">
-        <input id="dateFilter" type="text" placeholder="Sélectionner une date" class="form-control w-25">
+        <input id="dateFilter" type="text" class="form-control w-25"
+               placeholder="Filtrer par date">
     </div>
 
-    <!-- Counters -->
-    <div class="row g-4 mb-4 text-center">
-        <div class="col-md-4">
-            <div class="card stat-card p-3">
-                <p>Chiffre d'affaires aujourd’hui</p>
-                <div id="caJour" class="stat-number text-primary">0</div>
-            </div>
+    <!-- CA -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <img src="/images/revenue.png">
+            <h3>CA du jour</h3>
+            <div id="caJour" class="stat-number">0</div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card stat-card p-3">
-                <p>Chiffre d'affaires mensuel</p>
-                <div id="caMois" class="stat-number text-success">0</div>
-            </div>
+        <div class="stat-card">
+            <img src="/images/revenue.png">
+            <h3>CA du mois</h3>
+            <div id="caMois" class="stat-number">0</div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card stat-card p-3">
-                <p>Chiffre d'affaires annuel</p>
-                <div id="caAnnee" class="stat-number text-danger">0</div>
-            </div>
+        <div class="stat-card">
+            <img src="/images/revenue.png">
+            <h3>CA annuel</h3>
+            <div id="caAnnee" class="stat-number">0</div>
         </div>
     </div>
 
-    <!-- Graphique -->
-
-
-    <div class="card stat-card p-4 mb-4">
-        <h5 class="mb-3">📈 Ventes par jour</h5>
+    <!-- GRAPH VENTES -->
+    <div class="section-card">
+        <div class="section-title">
+            <img src="/images/chart.png">
+            Ventes par jour
+        </div>
         <canvas id="ventesChart"></canvas>
     </div>
 
-    <!-- Top produits -->
-    <div class="card stat-card p-4 mb-4">
-        <h5 class="mb-3">🔥 Top 5 Produits vendus</h5>
-        <table id="topProduitsTable" class="table table-hover">
-            <thead class="table-light">
+    <!-- TOP PRODUITS -->
+    <div class="section-card">
+        <div class="section-title">
+            <img src="/images/top.png">
+            Top 5 Produits
+        </div>
+        <table class="table table-hover">
+            <thead>
             <tr>
                 <th>Produit</th>
-                <th>Quantité vendue</th>
+                <th>Quantité</th>
             </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="topProduitsBody"></tbody>
         </table>
     </div>
-    <a href="/alerts" class="btn btn-danger mt-4">
-        🚨 Voir les alertes de stock
-        <span th:if="${nbNotifications > 0}" class="badge bg-light text-danger" th:text="${nbNotifications}"></span>
+
+    <!-- PAIEMENTS -->
+    <div class="section-card">
+        <div class="section-title">
+            <img src="/images/payment.png">
+            Moyens de paiement
+        </div>
+        <div class="chart-container">
+            <canvas id="paiementsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <img src="/images/sales.png">
+            <h3>Ventes</h3>
+            <div id="nbVentes" class="stat-number">0</div>
+        </div>
+
+        <div class="stat-card">
+            <img src="/images/clients.png">
+            <h3>Clients</h3>
+            <div id="nbClients" class="stat-number">0</div>
+        </div>
+
+        <div class="stat-card">
+            <img src="/images/basket.png">
+            <h3>Panier moyen</h3>
+            <div id="panierMoyen" class="stat-number">0</div>
+        </div>
+
+        <div class="stat-card">
+            <img src="/images/rupture.png">
+            <h3>Ruptures</h3>
+            <div id="nbRupture" class="stat-number text-danger">0</div>
+        </div>
+    </div>
+
+    <!-- ALERTES -->
+    <a href="/alerts" class="btn btn-danger action-btn">
+        <img src="/images/alert.png" width="20">
+        Alertes stock
+        <span th:if="${nbNotifications > 0}"
+              class="badge bg-light text-danger ms-2"
+              th:text="${nbNotifications}">
+        </span>
     </a>
 
 </div>
 
-<div class="card stat-card p-4 mb-4">
-    <h5 class="mb-3">💳 Répartition par moyen de paiement</h5>
-    <div class="chart-container">
-        <canvas id="paiementsChart"></canvas>
-    </div>
-</div>
-
-<div class="row g-4 mb-4 text-center">
-
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm p-3">
-            <div id="nbVentes" th:text="${nbVentes}" class="stat-number fs-2 fw-bold text-dark">0</div>
-            <div class="text-muted">Ventes</div>
-        </div>
-    </div>
-
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm p-3">
-            <div id="nbClients" th:text="${nbClients}" class="stat-number fs-2 fw-bold text-dark">0</div>
-            <div class="text-muted">Clients servis</div>
-        </div>
-    </div>
-
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm p-3">
-            <div id="panierMoyen" th:text="${panierMoyen}" class="stat-number fs-2 fw-bold text-dark">0</div>
-            <div class="text-muted">Panier moyen (MAD)</div>
-        </div>
-    </div>
-
-    <div class="col-md-3 col-6">
-        <div class="card shadow-sm p-3">
-            <div id="nbRupture" th:text="${nbRupture}" class="stat-number fs-2 fw-bold text-danger">0</div>
-            <div class="text-muted">Ruptures</div>
-        </div>
-    </div>
-
-</div>
-
-
-
-<!-- Scripts -->
+<!-- ================= SCRIPT COMPLET ================= -->
 <script>
-    let ventesChart, paiementsChart;
+    let ventesChart = null;
+    let paiementsChart = null;
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+
+        const icon = document.getElementById('themeIcon');
+        if (document.body.classList.contains('dark')) {
+            icon.src = '/images/sun.png';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            icon.src = '/images/moon.png';
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    // Load saved theme
+    window.onload = () => {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+            document.body.classList.add('dark');
+            document.getElementById('themeIcon').src = '/images/sun.png';
+        }
+    };
 
     function fetchStats(date = null) {
-        // 1️⃣ Chiffres et compteurs
-        const jours = 7;
+
+        /* 1️⃣ KPI & CA */
         fetch('/api/stats/dashboard' + (date ? '?date=' + date : ''))
             .then(res => res.json())
             .then(data => {
-                animateValue("caJour", data.caJour, "DH");
-                animateValue("caMois", data.caMois, "DH");
-                animateValue("caAnnee", data.caAnnee, "DH");
+                animate("caJour", data.caJour, " DH");
+                animate("caMois", data.caMois, " DH");
+                animate("caAnnee", data.caAnnee, " DH");
 
-                animateValue("nbVentes", data.nbVentes || 0);
-                animateValue("nbClients", data.nbClients || 0);
-                animateValue("panierMoyen", data.panierMoyen || 0, "DH");
-                animateValue("nbRupture", data.nbRupture || 0);
+                animate("nbVentes", data.nbVentes || 0);
+                animate("nbClients", data.nbClients || 0);
+                animate("panierMoyen", data.panierMoyen || 0, " DH");
+                animate("nbRupture", data.nbRupture || 0);
             });
 
-        // 2️⃣ Top produits
+        /* 2️⃣ TOP PRODUITS */
         fetch('/api/stats/top-produits')
             .then(res => res.json())
             .then(data => {
-                const tbody = document.querySelector("#topProduitsTable tbody");
-                tbody.innerHTML = '';
+                const tbody = document.getElementById("topProduitsBody");
+                tbody.innerHTML = "";
                 data.forEach(p => {
-                    tbody.innerHTML += `<tr><td>${p.nom}</td><td>${p.quantiteVendue}</td></tr>`;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${p.nom}</td>
+                            <td>${p.quantiteVendue}</td>
+                        </tr>`;
                 });
             });
 
-        // 3️⃣ Graphique ventes
-        fetch('/api/stats/ventes-graph'
-            + (date ? `?date=${date}&jours=${jours}` : `?jours=${jours}`))
+        /* 3️⃣ GRAPH VENTES */
+        fetch('/api/stats/ventes-graph' + (date ? '?date=' + date : ''))
             .then(res => res.json())
             .then(data => {
 
@@ -185,109 +388,111 @@
                         month: 'short'
                     })
                 );
-
                 const values = data.map(d => d.quantite);
 
-                const ctx = document.getElementById('ventesChart').getContext('2d');
                 if (ventesChart) ventesChart.destroy();
 
-                ventesChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: 'Ventes par jour',
-                            data: values,
-                            borderColor: '#0d6efd',
-                            backgroundColor: 'rgba(13,110,253,0.15)',
-                            tension: 0.4,
-                            fill: true,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {beginAtZero: true}
+                ventesChart = new Chart(
+                    document.getElementById('ventesChart'),
+                    {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [{
+                                data: values,
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102,126,234,0.2)',
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }]
                         },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: ctx => `${ctx.parsed.y} ventes`
-                                }
+                        options: {
+                            responsive: true,
+                            animation: {
+                                duration: 1200,
+                                easing: 'easeOutQuart'
                             },
-                            legend: {display: false}
+                            plugins: {legend: {display: false}},
+                            scales: {y: {beginAtZero: true}}
                         }
                     }
-                });
+                );
             });
-        // 4️⃣ Graphique paiements
+
+        /* 4️⃣ GRAPH PAIEMENTS */
         fetch('/api/stats/paiements' + (date ? '?date=' + date : ''))
             .then(res => res.json())
             .then(data => {
+
                 const labels = data.map(d => d.label);
                 const values = data.map(d => d.total);
 
-                const ctx = document.getElementById('paiementsChart').getContext('2d');
                 if (paiementsChart) paiementsChart.destroy();
 
-                paiementsChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels,
-                        datasets: [{
-                            data: values,
-                            backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {legend: {position: 'bottom'}}
+                paiementsChart = new Chart(
+                    document.getElementById('paiementsChart'),
+                    {
+                        type: 'doughnut',
+                        data: {
+                            labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: [
+                                    '#667eea',
+                                    '#28a745',
+                                    '#ffc107',
+                                    '#dc3545'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                animateRotate: true,
+                                animateScale: true,
+                                duration: 1000,
+                                easing: 'easeOutBack'
+                            },
+                            plugins: {legend: {position: 'bottom'}}
+                        }
                     }
-                });
+                );
             });
     }
 
-    // Animation compteurs
-    function animateValue(id, end, suffix = "") {
-        const obj = document.getElementById(id);
-        if (!obj) return;
+    /* Animation chiffres */
+    function animate(id, value, suffix = "") {
+        const el = document.getElementById(id);
+        if (!el) return;
 
-        end = Number(end);
-        if (isNaN(end)) {
-            obj.innerHTML = end;
-            return;
-        }
+        let current = 0;
+        value = Number(value) || 0;
+        const duration = 800;
+        const stepTime = 20;
+        const steps = duration / stepTime;
+        const increment = value / steps;
 
-        let start = 0;
-        let current = start;
-        let step = Math.max(1, Math.floor(end / 50));
-
-        let timer = setInterval(() => {
-            current += step;
-            if (current >= end) current = end;
-
-            obj.innerHTML = current.toLocaleString() + (suffix ? " " + suffix : "");
-
-            if (current === end) clearInterval(timer);
-        }, 20);
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= value) {
+                current = value;
+                clearInterval(timer);
+            }
+            el.textContent = Math.floor(current).toLocaleString() + suffix;
+        }, stepTime);
     }
 
-    // Date picker
+
+    /* Date Picker */
     flatpickr("#dateFilter", {
         dateFormat: "Y-m-d",
         onChange: (dates, dateStr) => fetchStats(dateStr)
     });
 
-    // Dark mode toggle
-    document.getElementById('toggleDark').addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        document.querySelectorAll('.table').forEach(t => t.classList.toggle('table-dark-mode'));
-    });
-
-    // Initial fetch
+    /* INIT */
     fetchStats();
 </script>
 

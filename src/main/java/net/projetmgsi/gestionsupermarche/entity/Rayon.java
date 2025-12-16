@@ -1,6 +1,7 @@
 package net.projetmgsi.gestionsupermarche.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,7 @@ public class Rayon {
     private String emplacement;  // Emplacement physique dans le magasin
 
     @OneToMany(mappedBy = "rayon", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Categorie> categories = new ArrayList<>();
 
     @Column(nullable = false)

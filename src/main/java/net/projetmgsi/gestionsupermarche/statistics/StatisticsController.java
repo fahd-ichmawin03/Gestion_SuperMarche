@@ -2,10 +2,6 @@ package net.projetmgsi.gestionsupermarche.statistics;
 
 import lombok.RequiredArgsConstructor;
 import net.projetmgsi.gestionsupermarche.alerts.NotificationService;
-import net.projetmgsi.gestionsupermarche.entity.Produit;
-import net.projetmgsi.gestionsupermarche.repository.LigneVenteRepository;
-import net.projetmgsi.gestionsupermarche.repository.StockRepository;
-import net.projetmgsi.gestionsupermarche.repository.VenteRepository;
 import net.projetmgsi.gestionsupermarche.statistics.dto.DashboardStatsDTO;
 import net.projetmgsi.gestionsupermarche.statistics.dto.TopProduitDTO;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -66,6 +62,7 @@ public class StatisticsController {
                 date != null ? date.atStartOfDay() : null
         );
     }
+
 
 
 
