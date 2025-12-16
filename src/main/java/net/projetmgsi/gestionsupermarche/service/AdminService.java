@@ -7,7 +7,7 @@ import net.projetmgsi.gestionsupermarche.repository.ProduitRepository;
 import net.projetmgsi.gestionsupermarche.repository.StockRepository;
 import net.projetmgsi.gestionsupermarche.repository.UserRepository;
 import net.projetmgsi.gestionsupermarche.user.Role;
-import net.projetmgsi.gestionsupermarche.user.User; // Utilise l'entité User pour les caissiers
+import net.projetmgsi.gestionsupermarche.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle Vente - Caissier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        .main-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .search-box button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .search-box button:hover {
+            background: #5568d3;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .product-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .product-card h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .product-card .price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .product-card .stock {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .cart-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 120px);
+        }
+
+        .cart-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-info h4 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .cart-item-info .price {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .qty-btn:hover {
+            background: #5568d3;
+        }
+
+        .remove-btn {
+            padding: 5px 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .cart-total {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .cart-total h3 {
+            display: flex;
+            justify-content: space-between;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .payment-section {
+            margin-bottom: 15px;
+        }
+
+        .payment-section label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .payment-section select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .checkout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💳 Nouvelle Vente</h1>
+        <a href="/caissier/dashboard" class="back-btn">← Retour au tableau de bord</a>
+    </div>
+
+    <div class="container">
+        <div class="main-section">
+            <div class="search-section">
+                <h2>Rechercher un produit</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Scanner code-barres ou rechercher par nom..." autofocus>
+                    <button onclick="searchProducts()">🔍 Rechercher</button>
+                </div>
+                <div id="productsGrid" class="products-grid"></div>
+            </div>
+        </div>
+
+        <div class="cart-section">
+            <h2>🛒 Panier</h2>
+            <div id="message" class="message"></div>
+            <div id="cartItems" class="cart-items">
+                <div class="empty-cart">
+                    <p>Le panier est vide</p>
+                    <p>Scannez ou ajoutez des produits</p>
+                </div>
+            </div>
+            <div class="cart-total">
+                <h3>
+                    <span>Total:</span>
+                    <span id="cartTotal">0.00 DH</span>
+                </h3>
+            </div>
+            <div class="payment-section">
+                <label for="paymentMethod">Moyen de paiement:</label>
+                <select id="paymentMethod">
+                    <option value="ESPECES">Espèces</option>
+                    <option value="CARTE_BANCAIRE">Carte bancaire</option>
+                    <option value="CHEQUE">Chèque</option>
+                </select>
+            </div>
+            <button id="checkoutBtn" class="checkout-btn" onclick="checkout()" disabled>
+                Valider la vente
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let products = [];
+
+        // Charger tous les produits au démarrage
+        function loadAllProducts() {
+            fetch('/caissier/produits')
+                .then(response => response.json())
+                .then(data => {
+                    products = data;
+                    displayProducts(products);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showMessage('Erreur lors du chargement des produits', 'error');
+                });
+        }
+
+        // Afficher les produits
+        function displayProducts(productList) {
+            const grid = document.getElementById('productsGrid');
+            if (productList.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #999;">Aucun produit trouvé</p>';
+                return;
+            }
+            
+            grid.innerHTML = productList.map(product => `
+                <div class="product-card" onclick="addToCart(${product.id})">
+                    <h3>${product.nom}</h3>
+                    <div class="price">${product.prix.toFixed(2)} DH</div>
+                    <div class="stock">Stock: ${product.stock}</div>
+                </div>
+            `).join('');
+        }
+
+        // Rechercher des produits
+        function searchProducts() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                displayProducts(products);
+                return;
+            }
+
+            // Rechercher par code-barres d'abord
+            fetch(`/caissier/produits/code/${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Not found');
+                })
+                .then(product => {
+                    displayProducts([product]);
+                    // Ajouter automatiquement au panier si trouvé par code
+                    addToCart(product.id);
+                    document.getElementById('searchInput').value = '';
+                })
+                .catch(() => {
+                    // Rechercher par nom
+                    fetch(`/caissier/produits/recherche?nom=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => displayProducts(data))
+                        .catch(error => console.error('Erreur:', error));
+                });
+        }
+
+        // Permettre la recherche avec Enter
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProducts();
+            }
+        });
+
+        // Ajouter au panier
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.product.id === productId);
+            if (existingItem) {
+                if (existingItem.quantity < product.stock) {
+                    existingItem.quantity++;
+                } else {
+                    showMessage('Stock insuffisant', 'error');
+                    return;
+                }
+            } else {
+                cart.push({ product, quantity: 1 });
+            }
+            
+            updateCart();
+            showMessage(`${product.nom} ajouté au panier`, 'success');
+        }
+
+        // Mettre à jour le panier
+        function updateCart() {
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="empty-cart">
+                        <p>Le panier est vide</p>
+                        <p>Scannez ou ajoutez des produits</p>
+                    </div>
+                `;
+                cartTotal.textContent = '0.00 DH';
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h4>${item.product.nom}</h4>
+                        <div class="price">${item.product.prix.toFixed(2)} DH × ${item.quantity} = ${(item.product.prix * item.quantity).toFixed(2)} DH</div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button class="qty-btn" onclick="decreaseQuantity(${item.product.id})">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="qty-btn" onclick="increaseQuantity(${item.product.id})">+</button>
+                        <button class="remove-btn" onclick="removeFromCart(${item.product.id})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.product.prix * item.quantity), 0);
+            cartTotal.textContent = total.toFixed(2) + ' DH';
+            checkoutBtn.disabled = false;
+        }
+
+        // Augmenter la quantité
+        function increaseQuantity(productId) {
+            const item = cart.find(i => i.product.id === productId);
+            if (item && item.quantity < item.product.stock) {
+                item.quantity++;
+                updateCart();
+            } else {
+                showMessage('Stock insuffisant', 'error');
+            }
+        }
+
+        // Diminuer la quantité
+        function decreaseQuantity(productId) {
+            const item = cart.find(i => i.product.id === productId);
+            if (item) {
+                item.quantity--;
+                if (item.quantity === 0) {
+                    removeFromCart(productId);
+                } else {
+                    updateCart();
+                }
+            }
+        }
+
+        // Retirer du panier
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.product.id !== productId);
+            updateCart();
+        }
+
+        // Valider la vente
+        function checkout() {
+            if (cart.length === 0) return;
+
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const items = cart.map(item => ({
+                produitId: item.product.id,
+                quantite: item.quantity
+            }));
+
+            fetch('/caissier/ventes/creer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    moyenPaiement: paymentMethod,
+                    items: items
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(`Vente enregistrée avec succès! Total: ${data.total.toFixed(2)} DH`, 'success');
+                    cart = [];
+                    updateCart();
+                    loadAllProducts(); // Recharger les produits pour mettre à jour le stock
+                    document.getElementById('searchInput').value = '';
+                } else {
+                    showMessage(data.error || 'Erreur lors de la vente', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showMessage('Erreur lors de la vente', 'error');
+            });
+        }
+
+        // Afficher un message
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialiser
+        loadAllProducts();
+    </script>
+</body>
+</html>
