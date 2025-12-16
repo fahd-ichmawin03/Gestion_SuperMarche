@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "produits")
@@ -32,6 +33,13 @@ public class Produit {
 
     @Column(nullable = false)
     private Integer stock;
+
+    @Column(nullable = false)
+    private int stockMinimal;
+
+    @Column(name = "date_expiration")
+    private LocalDate dateExpiration;
+
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categorie_id")
