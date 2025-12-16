@@ -2,14 +2,17 @@ package net.projetmgsi.gestionsupermarche.config;
 
 import net.projetmgsi.gestionsupermarche.entity.*;
 import net.projetmgsi.gestionsupermarche.repository.*;
+import net.projetmgsi.gestionsupermarche.user.Role;
+import net.projetmgsi.gestionsupermarche.user.User;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 public class DataSeeder {
@@ -19,42 +22,92 @@ public class DataSeeder {
                                       CategorieRepository categorieRepo,
                                       ProduitRepository produitRepo,
                                       VenteRepository venteRepo,
-                                      LigneVenteRepository ligneVenteRepo) {
+                                      UserRepository userRepo,
+                                      PasswordEncoder passwordEncoder) {
 
         return args -> {
 
+            if (userRepo.count() == 0) {
+                System.out.println("👤 CRÉATION DES UTILISATEURS PAR DÉFAUT");
+
+                User admin = new User();
+                admin.setUsername("admin");
+                admin.setPassword(passwordEncoder.encode("1234"));
+                admin.setRole(Role.ADMIN);
+
+                User caissier = new User();
+                caissier.setUsername("caissier1");
+                caissier.setPassword(passwordEncoder.encode("1234"));
+                caissier.setRole(Role.CAISSIER);
+
+                userRepo.saveAll(Arrays.asList(admin, caissier));
+            }
+
             if (produitRepo.count() > 0) {
-                System.out.println("ℹ️ Données déjà existantes.");
+                System.out.println("ℹ️ Données produits déjà existantes.");
                 return;
             }
 
-            System.out.println("🚀 INITIALISATION DES DONNÉES");
+            System.out.println("🚀 INITIALISATION DES DONNÉES PRODUITS");
 
-            // ==== Rayons ====
+            // --- Rayons ---
             Rayon boissons = new Rayon(null, "Boissons", "Liquides", "A1", null, true);
             Rayon snacks = new Rayon(null, "Snacks", "Gâteaux", "B2", null, true);
-            rayonRepo.saveAll(List.of(boissons, snacks));
+            rayonRepo.saveAll(Arrays.asList(boissons, snacks));
 
-            // ==== Catégories ====
+            // --- Catégories ---
             Categorie sodas = new Categorie(null, "Sodas", "Gazéifié", boissons, null, true);
             Categorie eaux = new Categorie(null, "Eaux", "Minérales", boissons, null, true);
             Categorie biscuits = new Categorie(null, "Biscuits", "Secs", snacks, null, true);
-            categorieRepo.saveAll(List.of(sodas, eaux, biscuits));
+            categorieRepo.saveAll(Arrays.asList(sodas, eaux, biscuits));
 
-            // ==== Produits ====
-            Produit lait = new Produit(null, "PRD001", "Lait 1L", "Lait demi-écrémé",
-                    new BigDecimal("7.50"), 20, 5, LocalDate.now().minusDays(2), sodas, true); // expiré
-            Produit yaourt = new Produit(null, "PRD002", "Yaourt Danone", "Yaourt nature",
-                    new BigDecimal("2.00"), 50, 10, LocalDate.now().plusDays(3), sodas, true); // bientôt expiré
-            Produit eau = new Produit(null, "PRD003", "Eau Sidi Ali 1.5L", "Eau minérale",
-                    new BigDecimal("3.00"), 100, 20, LocalDate.now().plusMonths(12), eaux, true); // OK
-            Produit biscuit = new Produit(null, "PRD004", "Biscuits Chocolat", "Fourrés",
-                    new BigDecimal("5.50"), 15, 5, LocalDate.now().minusDays(5), biscuits, true); // expiré
-            produitRepo.saveAll(List.of(lait, yaourt, eau, biscuit));
+            Produit lait = new Produit();
+            lait.setCode("PRD001");
+            lait.setNom("Lait 1L");
+            lait.setDescription("Lait demi-écrémé");
+            lait.setPrix(new BigDecimal("7.50"));
+            lait.setStock(20);
+            lait.setStockMinimal(5);
+            lait.setDateExpiration(LocalDate.now().minusDays(2));
+            lait.setCategorie(sodas);
+            lait.setActif(true);
 
-            // ==== Ventes + LignesVente (dates proches pour graphe) ====
+            Produit yaourt = new Produit();
+            yaourt.setCode("PRD002");
+            yaourt.setNom("Yaourt Danone");
+            yaourt.setDescription("Yaourt nature");
+            yaourt.setPrix(new BigDecimal("2.00"));
+            yaourt.setStock(50);
+            yaourt.setStockMinimal(10);
+            yaourt.setDateExpiration(LocalDate.now().plusDays(3));
+            yaourt.setCategorie(sodas);
+            yaourt.setActif(true);
 
-            // Vente aujourd'hui
+            Produit eau = new Produit();
+            eau.setCode("PRD003");
+            eau.setNom("Eau Sidi Ali 1.5L");
+            eau.setDescription("Eau minérale");
+            eau.setPrix(new BigDecimal("3.00"));
+            eau.setStock(100);
+            eau.setStockMinimal(20);
+            eau.setDateExpiration(LocalDate.now().plusMonths(12));
+            eau.setCategorie(eaux);
+            eau.setActif(true);
+
+            Produit biscuit = new Produit();
+            biscuit.setCode("PRD004");
+            biscuit.setNom("Biscuits Chocolat");
+            biscuit.setDescription("Fourrés");
+            biscuit.setPrix(new BigDecimal("5.50"));
+            biscuit.setStock(15);
+            biscuit.setStockMinimal(5);
+            biscuit.setDateExpiration(LocalDate.now().plusMonths(6));
+            biscuit.setCategorie(biscuits);
+            biscuit.setActif(true);
+
+            produitRepo.saveAll(Arrays.asList(lait, yaourt, eau, biscuit));
+
+            // --- Ventes ---
             Vente venteToday = new Vente();
             venteToday.setCaissier("caissier1");
             venteToday.setMoyenPaiement(MoyenPaiement.ESPECES);
@@ -62,14 +115,10 @@ public class DataSeeder {
 
             LigneVente lv1 = new LigneVente(null, venteToday, lait, 2, lait.getPrix(), null);
             LigneVente lv2 = new LigneVente(null, venteToday, yaourt, 3, yaourt.getPrix(), null);
-            lv1.calculateSousTotal();
-            lv2.calculateSousTotal();
-            venteToday.getLignes().addAll(List.of(lv1, lv2));
-            venteToday.setTotal(venteToday.getLignes().stream()
-                    .map(LigneVente::getSousTotal)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add));
+            lv1.calculateSousTotal(); lv2.calculateSousTotal();
+            venteToday.getLignes().addAll(Arrays.asList(lv1, lv2));
+            venteToday.setTotal(lv1.getSousTotal().add(lv2.getSousTotal()));
 
-            // Vente hier
             Vente venteYesterday = new Vente();
             venteYesterday.setCaissier("caissier2");
             venteYesterday.setMoyenPaiement(MoyenPaiement.CARTE_BANCAIRE);
@@ -77,47 +126,13 @@ public class DataSeeder {
 
             LigneVente lv3 = new LigneVente(null, venteYesterday, yaourt, 2, yaourt.getPrix(), null);
             LigneVente lv4 = new LigneVente(null, venteYesterday, eau, 4, eau.getPrix(), null);
-            lv3.calculateSousTotal();
-            lv4.calculateSousTotal();
-            venteYesterday.getLignes().addAll(List.of(lv3, lv4));
-            venteYesterday.setTotal(venteYesterday.getLignes().stream()
-                    .map(LigneVente::getSousTotal)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add));
+            lv3.calculateSousTotal(); lv4.calculateSousTotal();
+            venteYesterday.getLignes().addAll(Arrays.asList(lv3, lv4));
+            venteYesterday.setTotal(lv3.getSousTotal().add(lv4.getSousTotal()));
 
-            // Vente il y a 2 jours
-            Vente vente2DaysAgo = new Vente();
-            vente2DaysAgo.setCaissier("caissier1");
-            vente2DaysAgo.setMoyenPaiement(MoyenPaiement.CARTE_BANCAIRE);
-            vente2DaysAgo.setDateVente(LocalDateTime.now().minusDays(2));
+            venteRepo.saveAll(Arrays.asList(venteToday, venteYesterday));
 
-            LigneVente lv5 = new LigneVente(null, vente2DaysAgo, biscuit, 1, biscuit.getPrix(), null);
-            LigneVente lv6 = new LigneVente(null, vente2DaysAgo, lait, 1, lait.getPrix(), null);
-            lv5.calculateSousTotal();
-            lv6.calculateSousTotal();
-            vente2DaysAgo.getLignes().addAll(List.of(lv5, lv6));
-            vente2DaysAgo.setTotal(vente2DaysAgo.getLignes().stream()
-                    .map(LigneVente::getSousTotal)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-            // Vente il y a 3 jours
-            Vente vente3DaysAgo = new Vente();
-            vente3DaysAgo.setCaissier("caissier2");
-            vente3DaysAgo.setMoyenPaiement(MoyenPaiement.ESPECES);
-            vente3DaysAgo.setDateVente(LocalDateTime.now().minusDays(3));
-
-            LigneVente lv7 = new LigneVente(null, vente3DaysAgo, eau, 3, eau.getPrix(), null);
-            LigneVente lv8 = new LigneVente(null, vente3DaysAgo, biscuit, 2, biscuit.getPrix(), null);
-            lv7.calculateSousTotal();
-            lv8.calculateSousTotal();
-            vente3DaysAgo.getLignes().addAll(List.of(lv7, lv8));
-            vente3DaysAgo.setTotal(vente3DaysAgo.getLignes().stream()
-                    .map(LigneVente::getSousTotal)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-            // Enregistrement
-            venteRepo.saveAll(List.of(venteToday, venteYesterday, vente2DaysAgo, vente3DaysAgo));
-
-            System.out.println("✅ PRODUITS + VENTES AVEC LIGNES CRÉÉS");
+            System.out.println("✅ DONNÉES DE TEST AJOUTÉES AVEC SUCCÈS !");
         };
     }
 }

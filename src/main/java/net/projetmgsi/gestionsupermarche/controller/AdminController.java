@@ -9,9 +9,8 @@ public class AdminController {
 
     @GetMapping("/")
     public String home() {
-        return "Bienvenue dans Gestion SuperMarché - Application démarrée avec succès !";
+        return "redirect:/login";
     }
-
     @GetMapping("/admin/users")
     public String manageUsers() {
         return "Gestion des utilisateurs";

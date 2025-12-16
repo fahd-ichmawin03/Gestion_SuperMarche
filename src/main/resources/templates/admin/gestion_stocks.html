@@ -1,39 +1,107 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Approvisionnement</title>
+  <title>Gestion Stocks & Produits</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link th:href="@{/css/style.css}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <a th:href="@{/admin/dashboard}" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> Retour Dashboard</a>
+<div class="container mt-4 mb-5">
 
-      <div class="card card-custom">
-        <div class="card-header bg-success text-white">
-          <h4><i class="fas fa-dolly"></i> Entrée de Stock</h4>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a th:href="@{/admin/dashboard}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Retour Dashboard
+    </a>
+    <h2 class="text-primary fw-bold">Gestion des Stocks</h2>
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Créer un Nouveau Produit</h5>
         </div>
         <div class="card-body">
-          <form th:action="@{/admin/gestion-stocks/approvisionner}" method="post" onsubmit="return validerStock()">
+          <form th:action="@{/admin/gestion-stocks/nouveau}" method="post">
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Référence (Code)</label>
+                <input type="text" name="reference" class="form-control" placeholder="ex: REF-001" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Nom du Produit</label>
+                <input type="text" name="nom" class="form-control" placeholder="ex: Jus d'Orange" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Description</label>
+              <textarea name="description" class="form-control" rows="2" placeholder="Détails du produit..."></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Prix (DH)</label>
+                <input type="number" step="0.01" name="prix" class="form-control" placeholder="0.00" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Catégorie</label>
+                <select name="categorieId" class="form-select" required>
+                  <option value="" disabled selected>-- Choisir --</option>
+                  <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.nom}"></option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Date Expiration</label>
+                <input type="date" name="dateExpiration" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold text-success">Stock Initial</label>
+                <input type="number" name="stock" class="form-control border-success" value="0" min="0" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold text-danger">Stock Minimal</label>
+                <input type="number" name="stockMinimal" class="form-control border-danger" value="10" min="1" required>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer le Produit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="fas fa-dolly"></i> Entrée de Stock</h5>
+        </div>
+        <div class="card-body">
+          <form th:action="@{/admin/gestion-stocks/approvisionner}" method="post">
 
             <div class="mb-4">
               <label class="form-label fw-bold">Sélectionner le Produit</label>
-              <select name="produitId" class="form-select form-select-lg" required>
+              <select name="produitId" class="form-select form-select-lg" size="8" required>
                 <option value="" disabled selected>-- Choisir un produit --</option>
                 <option th:each="p : ${produits}"
                         th:value="${p.id}"
-                        th:text="${p.nom + ' (En stock: ' + p.stock + ' | Prix: ' + p.prix + ' DH)'}">
+                        th:text="${p.nom + ' (Stock: ' + p.stock + ')'}">
                 </option>
               </select>
             </div>
 
             <div class="mb-4">
               <label class="form-label fw-bold">Quantité à ajouter</label>
-              <input type="number" id="quantite" name="quantite" class="form-control form-control-lg" placeholder="ex: 50" min="1" required>
+              <input type="number" id="quantite" name="quantite" class="form-control form-control-lg" placeholder="+ Quantité" min="1" required>
               <small class="text-muted">La quantité sera additionnée au stock actuel.</small>
             </div>
 
@@ -46,6 +114,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </div>
 
