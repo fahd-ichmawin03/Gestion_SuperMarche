@@ -33,10 +33,16 @@ public class Produit {
     @Column(nullable = false)
     private Integer stock;
 
+    @Column(nullable = false)
+    private int stockMinimal;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;
 
     @Column(nullable = false)
     private Boolean actif = true;
+
+    public Produit(Object o, String number, String cocaCola, String s, BigDecimal bigDecimal, int i, Categorie c1, boolean b) {
+    }
 }

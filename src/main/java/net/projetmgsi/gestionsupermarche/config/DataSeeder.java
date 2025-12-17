@@ -43,9 +43,9 @@ public class DataSeeder {
 
                 produitRepo.saveAll(Arrays.asList(p1, p2, p3));
 
-                System.out.println("✅ 3 PRODUITS AJOUTÉS : CODES 1111, 2222, 3333");
+                System.out.println("3 PRODUITS AJOUTÉS : CODES 1111, 2222, 3333");
             } else {
-                System.out.println("ℹ️ La base de données contient déjà des produits.");
+                System.out.println("La base de données contient déjà des produits.");
             }
         };
     }

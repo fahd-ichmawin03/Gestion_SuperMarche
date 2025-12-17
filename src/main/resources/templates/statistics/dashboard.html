@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Supermarché</title>
+
+    <!-- Bootstrap + Chart.js + DatePicker -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+        body.dark-mode {
+            background-color: #1e1e2f;
+            color: #f8f9fa;
+        }
+        .stat-card {
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .chart-container {
+            max-width: 500px;   /* largeur max du graphique */
+            max-height: 400px;  /* hauteur max */
+            margin: 0 auto;     /* centrer horizontalement */
+        }
+
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-number { font-weight: bold; font-size: 2rem; }
+        .table-dark-mode { background-color: #2e2e3e; color: #f8f9fa; }
+    </style>
+</head>
+
+<body>
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">📊 Dashboard - Supermarché</h2>
+        <button id="toggleDark" class="btn btn-outline-secondary">🌙 Mode sombre</button>
+    </div>
+
+    <!-- Filtre par date -->
+    <div class="mb-4">
+        <input id="dateFilter" type="text" placeholder="Sélectionner une date" class="form-control w-25">
+    </div>
+
+    <!-- Counters -->
+    <div class="row g-4 mb-4 text-center">
+        <div class="col-md-4">
+            <div class="card stat-card p-3">
+                <p>Chiffre d'affaires aujourd’hui</p>
+                <div id="caJour" class="stat-number text-primary">0</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card p-3">
+                <p>Chiffre d'affaires mensuel</p>
+                <div id="caMois" class="stat-number text-success">0</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card p-3">
+                <p>Chiffre d'affaires annuel</p>
+                <div id="caAnnee" class="stat-number text-danger">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphique -->
+
+
+    <div class="card stat-card p-4 mb-4">
+        <h5 class="mb-3">📈 Ventes par jour</h5>
+        <canvas id="ventesChart"></canvas>
+    </div>
+
+    <!-- Top produits -->
+    <div class="card stat-card p-4 mb-4">
+        <h5 class="mb-3">🔥 Top 5 Produits vendus</h5>
+        <table id="topProduitsTable" class="table table-hover">
+            <thead class="table-light">
+            <tr>
+                <th>Produit</th>
+                <th>Quantité vendue</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <a href="/alerts" class="btn btn-danger mt-4">🚨 Voir les alertes de stock</a>
+
+</div>
+
+<div class="card stat-card p-4 mb-4">
+    <h5 class="mb-3">💳 Répartition par moyen de paiement</h5>
+    <div class="chart-container">
+        <canvas id="paiementsChart"></canvas>
+    </div>
+</div>
+
+
+<div class="row g-4 mb-4 text-center">
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <p>🧾 Nombre de ventes</p>
+            <div id="nbVentes" class="stat-number text-dark">0</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <p>👥 Clients servis</p>
+            <div id="nbClients" class="stat-number text-dark">0</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <p>🛒 Panier moyen</p>
+            <div id="panierMoyen" class="stat-number text-dark">0</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <p>⚠️ Produits en rupture</p>
+            <div id="nbRupture" class="stat-number text-danger">0</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Scripts -->
+<script>
+    let ventesChart, paiementsChart;
+
+    function fetchStats(date = null) {
+        // 1️⃣ Chiffre d'affaires et compteurs
+        fetch('/api/stats/dashboard' + (date ? '?date=' + date : ''))
+            .then(res => res.json())
+            .then(data => {
+                animateValue("caJour", data.caJour);
+                animateValue("caMois", data.caMois);
+                animateValue("caAnnee", data.caAnnee);
+                animateValue("nbVentes", data.nbVentes || 0);
+                animateValue("nbClients", data.nbClients || 0);
+                animateValue("panierMoyen", data.panierMoyen || 0);
+                animateValue("nbRupture", data.nbRupture || 0);
+            });
+
+        // 2️⃣ Top produits
+        fetch('/api/stats/top-produits')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector("#topProduitsTable tbody");
+                tbody.innerHTML = '';
+                data.forEach(p => {
+                    tbody.innerHTML += `<tr><td>${p.nom}</td><td>${p.quantiteVendue}</td></tr>`;
+                });
+            });
+
+        // 3️⃣ Graphiques ventes
+        fetch('/api/stats/ventes-graph' + (date ? '?date=' + date : ''))
+            .then(res => res.json())
+            .then(data => {
+                const labels = data.map(d => d.date);
+                const values = data.map(d => d.quantite);
+
+                const ctx = document.getElementById('ventesChart').getContext('2d');
+                if (ventesChart) ventesChart.destroy();
+
+                ventesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label:'Ventes par jour', data: values, borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,0.2)', tension:0.4, fill:true }] },
+                    options: { responsive:true, scales:{y:{beginAtZero:true}} }
+                });
+            });
+
+        // 4️⃣ Graphique paiements
+        fetch('/api/stats/paiements' + (date ? '?date=' + date : ''))
+            .then(res => res.json())
+            .then(data => {
+                const labels = data.map(d => d.label);
+                const values = data.map(d => d.total);
+
+                const ctx = document.getElementById('paiementsChart').getContext('2d');
+                if (paiementsChart) paiementsChart.destroy();
+
+                paiementsChart = new Chart(ctx, {
+                    type:'doughnut',
+                    data:{ labels, datasets:[{ data: values, backgroundColor:['#0d6efd','#198754','#ffc107','#dc3545'] }] },
+                    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+                });
+            });
+    }
+
+    // Animation compteurs
+    function animateValue(id, end) {
+        let start = 0, obj = document.getElementById(id), current = start;
+        let step = Math.max(1, Math.floor(end/100));
+        let timer = setInterval(function(){
+            current += step;
+            if(current>=end) current=end;
+            obj.innerHTML = current.toLocaleString() + " DH";
+            if(current===end) clearInterval(timer);
+        },15);
+    }
+
+    // Date picker
+    flatpickr("#dateFilter",{ dateFormat:"Y-m-d", onChange:(dates, dateStr)=> fetchStats(dateStr) });
+
+    // Dark mode toggle
+    document.getElementById('toggleDark').addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        document.querySelectorAll('.table').forEach(t => t.classList.toggle('table-dark-mode'));
+    });
+
+    // Initial fetch
+    fetchStats();
+
+</script>
+</body>
+</html>
