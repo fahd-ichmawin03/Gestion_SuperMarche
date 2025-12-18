@@ -24,7 +24,7 @@ public class AdminGestionController {
     @Autowired private ProduitRepository produitRepository;
     @Autowired private CategorieRepository categorieRepository;
 
-    // --- PAGE CAISSIERS ---
+    // PAGE CAISSIERS
     @GetMapping("/gestion-caissiers")
     public String pageCaissiers(Model model) {
         model.addAttribute("caissiers", adminService.listerTousLesCaissiers());
@@ -43,11 +43,12 @@ public class AdminGestionController {
         return "redirect:/admin/gestion-caissiers";
     }
 
-    // --- PAGE STOCKS & PRODUITS ---
+    // PAGE STOCKS & PRODUITS
     @GetMapping("/gestion-stocks")
     public String pageStocks(Model model) {
-        // On charge les produits et catégories pour l'affichage
-        List<Produit> produits = produitRepository.findAll();
+        // IMPORTANT : On ne charge QUE les produits actifs (pas ceux supprimés logiquement)
+        List<Produit> produits = produitRepository.findByActifTrue();
+
         List<Categorie> categories = categorieRepository.findAll();
 
         model.addAttribute("produits", produits);
@@ -60,6 +61,29 @@ public class AdminGestionController {
     @PostMapping("/gestion-stocks/approvisionner")
     public String addStock(@RequestParam Long produitId, @RequestParam int quantite, Authentication auth) {
         adminService.approvisionnerStock(produitId, quantite, auth.getName());
+        return "redirect:/admin/gestion-stocks";
+    }
+
+    // SUPPRESSION (Conforme à "opt Supprimer")
+    @GetMapping("/gestion-stocks/supprimer/{id}")
+    public String supprimerProduit(@PathVariable Long id) {
+        adminService.supprimerProduit(id);
+        return "redirect:/admin/gestion-stocks";
+    }
+
+    // MODIFICATION - Afficher le formulaire (Conforme à "opt Modifier")
+    @GetMapping("/gestion-stocks/modifier/{id}")
+    public String afficherFormulaireModification(@PathVariable Long id, Model model) {
+        Produit p = produitRepository.findById(id).orElseThrow();
+        model.addAttribute("produitAModifier", p);
+        model.addAttribute("categories", categorieRepository.findAll());
+        return "admin/modifier_produit";
+    }
+
+    // MODIFICATION :Enregistrer les changements
+    @PostMapping("/gestion-stocks/modifier")
+    public String validerModification(@ModelAttribute Produit produit) {
+        adminService.modifierProduit(produit.getId(), produit);
         return "redirect:/admin/gestion-stocks";
     }
 
@@ -87,7 +111,7 @@ public class AdminGestionController {
         p.setStockMinimal(stockMinimal);
         p.setDateExpiration(dateExpiration);
         p.setCategorie(cat);
-        p.setActif(true);
+        p.setActif(true); // Actif par défaut
 
         produitRepository.save(p);
 

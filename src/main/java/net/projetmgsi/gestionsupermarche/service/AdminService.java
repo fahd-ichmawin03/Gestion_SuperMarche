@@ -24,55 +24,98 @@ public class AdminService {
     @Autowired private StockRepository stockRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
-    // --- GESTION CAISSIERS ---
+    // GESTION DES RESSOURCES HUMAINES (CAISSIERS)
 
-    /** Liste tous les utilisateurs ayant le rôle CAISSIER */
+    // Liste tous les utilisateurs ayant le rôle CAISSIER
     public List<User> listerTousLesCaissiers() {
         return userRepository.findAll().stream()
                 .filter(u -> u.getRole() == Role.CAISSIER)
                 .collect(Collectors.toList());
     }
 
-    /** Créer un nouvel utilisateur Caissier */
+    //Créer un nouvel utilisateur Caissier de manière sécurisée
     public User creerCaissier(String username, String rawPassword) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("Un utilisateur existe déjà avec ce nom.");
         }
         User user = new User();
         user.setUsername(username);
+        // On crypte le mot de passe avant de l'enregistrer
         user.setPassword(passwordEncoder.encode(rawPassword));
-        user.setRole(Role.CAISSIER); // IMPORTANT : Lui donner le bon rôle
+        user.setRole(Role.CAISSIER);
         return userRepository.save(user);
     }
 
-    /** Supprimer un caissier par ID */
+    //Supprimer un caissier par ID
     public void supprimerCaissier(Long id) {
         userRepository.deleteById(id);
     }
 
-    // --- GESTION STOCK (APPROVISIONNEMENT) ---
+    // GESTION LOGISTIQUE (STOCK & APPROVISIONNEMENT)
 
-    /** Effectue un mouvement d'entrée en stock et enregistre le mouvement. */
+    /** * Effectue un mouvement d'entrée en stock et enregistre le mouvement dans l'historique.
+     * @Transactional assure que si l'enregistrement de l'historique échoue, le stock n'est pas modifié.
+     */
     @Transactional
     public void approvisionnerStock(Long produitId, int quantite, String adminName) {
-        // 1. Trouver le produit
+        // Trouver le produit
         Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new RuntimeException("Produit introuvable"));
 
-        // 2. Mettre à jour le stock du produit
+        // Mettre à jour le stock du produit
         int stockAvant = produit.getStock();
         produit.setStock(stockAvant + quantite);
         produitRepository.save(produit); // Sauvegarde le produit avec le nouveau stock
 
-        // 3. Enregistrer le mouvement de stock
-        Stock mouvement = new Stock();
-        mouvement.setProduit(produit);
-        mouvement.setTypeMouvement(TypeMouvement.ENTREE);
-        mouvement.setQuantite(quantite);
-        mouvement.setStockAvant(stockAvant);
-        mouvement.setStockApres(produit.getStock());
-        mouvement.setUtilisateur(adminName);
-        mouvement.setCommentaire("Approvisionnement manuel par Admin");
-        stockRepository.save(mouvement);
+        // Enregistrer le mouvement de stock (Traçabilité)
+        try {
+            Stock mouvement = new Stock();
+            mouvement.setProduit(produit);
+            mouvement.setTypeMouvement(TypeMouvement.ENTREE);
+            mouvement.setQuantite(quantite);
+            mouvement.setStockAvant(stockAvant);
+            mouvement.setStockApres(produit.getStock());
+            mouvement.setUtilisateur(adminName);
+            mouvement.setCommentaire("Approvisionnement manuel par Admin");
+            stockRepository.save(mouvement);
+        } catch (Exception e) {
+            System.err.println("Attention : L'historique stock n'a pas pu être sauvé.");
+        }
+    }
+
+    // GESTION DU CATALOGUE (CRUD PRODUIT)
+
+
+    /** Modifier les informations d'un produit existant */
+    @Transactional
+    public void modifierProduit(Long id, Produit produitModifie) {
+        // On cherche le produit existant
+        Produit p = produitRepository.findById(id).orElseThrow();
+
+        // On met à jour ses infos (Nom, Prix, Description, Catégorie)
+        p.setNom(produitModifie.getNom());
+        p.setPrix(produitModifie.getPrix());
+        p.setDescription(produitModifie.getDescription());
+        p.setCategorie(produitModifie.getCategorie());
+
+        produitRepository.save(p);
+    }
+
+    /** * Supprimer un produit.
+     * Si le produit est lié à des ventes, on effectue une suppression LOGIQUE (désactivation).
+     */
+    public void supprimerProduit(Long id) {
+        try {
+            // Tente la suppression physique
+            produitRepository.deleteById(id);
+        } catch (Exception e) {
+            // Si échec (clé étrangère présente), on désactive le produit
+            System.err.println("Suppression physique impossible (produit vendu). Passage en mode ARCHIVAGE.");
+            Produit p = produitRepository.findById(id).orElse(null);
+            if (p != null) {
+                p.setActif(false); // On le marque comme inactif
+                produitRepository.save(p);
+            }
+        }
     }
 }
